@@ -1,0 +1,362 @@
+/* ===== Tokens ===== */
+:root {
+  --bg-void: #050007;
+  --bg-deep: #170524;
+  --magenta: #ff2e88;
+  --cyan: #00f0ff;
+  --arcade-red: #d6203c;
+  --arcade-red-dark: #7a0f22;
+  --arcade-cream: #f2e8c9;
+  --lcd-green: #39ff14;
+  --lcd-bg: #001a06;
+  --sun-1: #ffd23f;
+  --sun-2: #ff9a3d;
+  --sun-3: #ff5e62;
+  --sun-4: #d6203c;
+  --sun-5: #7a1248;
+  --road: #1f1830;
+  --metal-light: #3a2f45;
+  --metal-dark: #100a14;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg-void);
+  font-family: 'Press Start 2P', monospace;
+  color: var(--arcade-cream);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+body {
+  padding: 24px 12px;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ===== Sunset horizon background ===== */
+.horizon {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #170524 0%, #3a0d3f 30%, #7a1248 55%, #170524 80%, var(--bg-void) 100%);
+}
+
+/* Hard horizontal bands instead of a soft glowing gradient circle —
+   the classic flat-color arcade "sunset sun", no blur/bloom. */
+.sun {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--sun-1) 0px 18px,
+    var(--sun-2) 18px 36px,
+    var(--sun-3) 36px 54px,
+    var(--sun-4) 54px 72px,
+    var(--sun-5) 72px 90px
+  );
+}
+
+.grid {
+  position: absolute;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
+  height: 50%;
+  background-image:
+    repeating-linear-gradient(to right, var(--magenta) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(to top, var(--magenta) 0 2px, transparent 2px 40px);
+  background-size: 100% 100%;
+  opacity: 0.6;
+  transform: perspective(220px) rotateX(60deg);
+  transform-origin: bottom;
+}
+
+/* ===== Cabinet ===== */
+.cabinet {
+  position: relative;
+  z-index: 1;
+  width: 440px;
+  max-width: 94vw;
+  background: linear-gradient(165deg, var(--arcade-red) 0%, var(--arcade-red-dark) 55%, var(--metal-dark) 100%);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 0, 0.4) inset,
+    0 18px 40px rgba(0, 0, 0, 0.55);
+}
+
+.marquee {
+  text-align: center;
+  padding: 10px 6px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  background: var(--bg-void);
+  box-shadow: 0 0 0 2px var(--metal-dark) inset;
+}
+
+.marquee-text {
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  /* hard offset shadow = screen-printed marquee art, not a neon halo */
+  text-shadow: 2px 2px 0 var(--magenta);
+  animation: flicker 4s infinite;
+}
+
+/* ===== Screen ===== */
+.screen {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 400 / 600;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--road);
+  box-shadow: 0 0 0 6px var(--metal-dark) inset, 0 0 30px rgba(0, 0, 0, 0.8) inset;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== HUD — flat LCD-style digital readout ===== */
+.hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.hud-box {
+  flex: 1;
+  background: var(--lcd-bg);
+  border: 2px solid var(--metal-dark);
+  border-radius: 2px;
+  padding: 4px 6px;
+  text-align: center;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.7);
+}
+
+.hud-label {
+  display: block;
+  font-size: 7px;
+  color: var(--arcade-cream);
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+  opacity: 0.75;
+}
+
+.hud-value {
+  display: block;
+  font-size: 11px;
+  color: var(--lcd-green);
+  text-shadow: 0 0 2px var(--lcd-green);
+}
+
+/* ===== Status icons (gamepad / mute) ===== */
+.icon-row {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+}
+
+.icon-badge {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--metal-light);
+  border-radius: 4px;
+  color: var(--arcade-cream);
+  opacity: 0.5;
+  transition: opacity 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+#gamepadIndicator.active {
+  opacity: 1;
+  border-color: var(--lcd-green);
+  box-shadow: 0 0 4px var(--lcd-green);
+}
+
+.icon-btn {
+  cursor: pointer;
+  opacity: 0.85;
+  font-family: inherit;
+  padding: 0;
+}
+
+.icon-btn:active {
+  background: var(--magenta);
+}
+
+/* ===== Overlay screens ===== */
+.overlay-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 20px;
+  background: rgba(5, 0, 7, 0.82);
+}
+
+.overlay-screen.hidden {
+  display: none;
+}
+
+.title-glow {
+  font-size: 28px;
+  line-height: 1.4;
+  margin: 0;
+  color: var(--magenta);
+  text-shadow: 3px 3px 0 var(--cyan);
+}
+
+.game-over-text {
+  color: var(--cyan);
+  text-shadow: 3px 3px 0 var(--magenta);
+}
+
+.instructions {
+  font-size: 9px;
+  line-height: 1.8;
+  color: var(--arcade-cream);
+  opacity: 0.85;
+}
+
+.hl-yellow {
+  color: var(--sun-1);
+}
+
+.final-score {
+  font-size: 12px;
+  color: var(--arcade-cream);
+}
+
+.new-high {
+  font-size: 10px;
+  color: var(--lcd-green);
+  text-shadow: 2px 2px 0 var(--bg-void);
+}
+
+.new-high.hidden {
+  display: none;
+}
+
+.blink {
+  font-size: 11px;
+  color: var(--arcade-cream);
+  animation: blink 1.1s step-end infinite;
+}
+
+.coin-prompt {
+  font-size: 9px;
+  color: var(--sun-1);
+  text-shadow: 1px 1px 0 var(--bg-void);
+  animation: blink 1.4s step-end infinite;
+}
+
+/* ===== CRT effects ===== */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 2px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  box-shadow: inset 0 0 60px 18px rgba(0, 0, 0, 0.65);
+}
+
+/* ===== Touch controls ===== */
+.touch-controls {
+  display: none;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ctrl-btn {
+  flex: 1;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  padding: 14px 0;
+  background: var(--bg-void);
+  color: var(--cyan);
+  border: 2px solid var(--magenta);
+  border-radius: 6px;
+  text-shadow: 1px 1px 0 var(--bg-void);
+  touch-action: none;
+}
+
+.ctrl-btn:active {
+  background: var(--magenta);
+  color: var(--bg-void);
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    display: flex;
+  }
+}
+
+.cabinet-footer {
+  text-align: center;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--metal-light);
+  margin-top: 14px;
+}
+
+/* ===== Animations ===== */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 1; }
+  97% { opacity: 0.6; }
+  98% { opacity: 1; }
+  99% { opacity: 0.7; }
+}
